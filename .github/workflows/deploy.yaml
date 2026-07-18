@@ -355,7 +355,3 @@ jobs:
             --docker-server=$ECR_REGISTRY \
             --docker-username=AWS \
             --docker-password-stdin -n shopverse || echo "secret exists"
-
-
-
-
