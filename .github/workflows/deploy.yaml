@@ -66,3 +66,97 @@ jobs:
       - name: Run frontend lint
         working-directory: ./frontend
         run: npx eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 --config .eslintrc.cjs
+  # ======================================================
+  # Stage 2 : Security Scan
+  #
+  # Purpose:
+  # ----------
+  # Scan the application Docker images for known security
+  # vulnerabilities before publishing them to Amazon ECR.
+  #
+  # This stage performs:
+  #
+  # 1. Checkout the latest source code
+  # 2. Build temporary frontend Docker image
+  # 3. Build temporary backend Docker image
+  # 4. Install Trivy vulnerability scanner
+  # 5. Scan frontend image for CRITICAL vulnerabilities
+  # 6. Scan backend image for CRITICAL vulnerabilities
+  #
+  # If any CRITICAL vulnerability is found,
+  # the pipeline stops and the images will NOT
+  # be pushed to Amazon ECR.
+  #
+  # Note:
+  # Temporary images are built only for scanning
+  # and are NOT pushed to the container registry.
+  # ======================================================
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    # Execute this stage only after Stage 1 (Test) succeeds
+    needs: test
+
+    steps:
+
+      # --------------------------------------------
+      # Checkout the latest application source code
+      # --------------------------------------------
+      - uses: actions/checkout@v4
+
+      # --------------------------------------------
+      # Build temporary frontend Docker image
+      # used only for vulnerability scanning.
+      # --------------------------------------------
+      - name: Build frontend image
+        run: docker build -t shopverse-frontend:scan ./frontend
+
+      # --------------------------------------------
+      # Build temporary backend Docker image
+      # used only for vulnerability scanning.
+      # --------------------------------------------
+      - name: Build backend image
+        run: docker build -t shopverse-backend:scan ./backend
+
+      # --------------------------------------------
+      # Install Trivy vulnerability scanner
+      # --------------------------------------------
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y wget apt-transport-https gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -q
+          sudo apt-get install -y trivy
+
+      # --------------------------------------------
+      # Scan frontend Docker image
+      #
+      # Fail the pipeline if any CRITICAL
+      # vulnerability is detected.
+      # --------------------------------------------
+      - name: Run Trivy scan on frontend
+        run: |
+          trivy image \
+            --exit-code 1 \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --format table \
+            shopverse-frontend:scan
+
+      # --------------------------------------------
+      # Scan backend Docker image
+      #
+      # Fail the pipeline if any CRITICAL
+      # vulnerability is detected.
+      # --------------------------------------------
+      - name: Run Trivy scan on backend
+        run: |
+          trivy image \
+            --exit-code 1 \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --format table \
+            shopverse-backend:scan
