@@ -253,3 +253,83 @@ jobs:
         run: |
           docker push $ECR_REGISTRY/shopverse-backend:${{ github.sha }}
           docker push $ECR_REGISTRY/shopverse-backend:latest            
+# ======================================================
+# Stage 4 : Update GitOps Repository
+#
+# Purpose:
+# ----------
+# After successfully pushing Docker images to Amazon ECR,
+# update the Helm values in the GitOps repository.
+#
+# Argo CD continuously watches the GitOps repository.
+# When a new commit is pushed, Argo CD automatically
+# deploys the latest version to the kOps cluster.
+#
+# This stage performs:
+#
+# 1. Clone the GitOps repository
+# 2. Update frontend image tag
+# 3. Update backend image tag
+# 4. Commit the changes
+# 5. Push the changes
+#
+# No deployment commands are executed here.
+# Argo CD performs the deployment automatically.
+# ======================================================
+
+update-gitops:
+  name: Update GitOps Repository
+  runs-on: ubuntu-latest
+
+  needs: build-and-push
+
+  env:
+    GITOPS_REPO: Gangapratheep/shopverse-gitops
+
+  steps:
+
+    # --------------------------------------------
+    # Clone GitOps Repository
+    # --------------------------------------------
+    - name: Clone GitOps Repository
+      run: |
+        git clone https://x-access-token:${{ secrets.GITOPS_TOKEN }}@github.com/${{ env.GITOPS_REPO }}.git
+
+    # --------------------------------------------
+    # Configure Git
+    # --------------------------------------------
+    - name: Configure Git
+      run: |
+        cd shopverse-gitops
+        git config user.name "Boggala Pratheep"
+        git config user.email "boggalapratheep@gmail.com"
+
+    # --------------------------------------------
+    # Update Helm values.yaml
+    # --------------------------------------------
+    - name: Update Image Tags
+      run: |
+        cd shopverse-gitops
+
+        sed -i "s|tag:.*# frontend-tag|tag: \"${{ github.sha }}\"  # frontend-tag|" environments/production/values.yaml
+
+        sed -i "s|tag:.*# backend-tag|tag: \"${{ github.sha }}\"  # backend-tag|" environments/production/values.yaml
+
+    # --------------------------------------------
+    # Commit Changes
+    # --------------------------------------------
+    - name: Commit Changes
+      run: |
+        cd shopverse-gitops
+
+        git add .
+
+        git commit -m "Update ShopVerse images to ${{ github.sha }}" || echo "No changes to commit"
+
+    # --------------------------------------------
+    # Push Changes
+    # --------------------------------------------
+    - name: Push Changes
+      run: |
+        cd shopverse-gitops
+        git push origin main
