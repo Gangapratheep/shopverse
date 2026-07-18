@@ -1,6 +1,5 @@
 # Kops-specific overrides for deploying to kops clusters
 
-# Enable ingress for kops-managed cluster. Set your hostname below.
 ingress:
   enabled: true
   ingressClassName: traefik
@@ -11,15 +10,15 @@ ingress:
     # traefik.ingress.kubernetes.io/router.entrypoints: websecure
     # traefik.ingress.kubernetes.io/router.tls: "true"
 
-# Set the host to your domain for the frontend/backend ingress
 frontend:
   ingressHost: shopverse.example.com
-  # imagePullSecrets should reference a Kubernetes secret existing in the cluster
+  replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
 
 backend:
   ingressHost: api.shopverse.example.com
+  replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
 
@@ -27,12 +26,6 @@ mysql:
   # Ensure this storageClass exists in your kops cluster (gp2 is common on AWS)
   storageClass: gp2
   storage: 10Gi
-
-# Tune replicas/resources for kops nodes
-frontend:
-  replicas: 2
-backend:
-  replicas: 2
 
 # Optionally override images here if you do not want CI to update values.yaml
 # frontend:

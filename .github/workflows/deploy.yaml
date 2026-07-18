@@ -22,6 +22,11 @@ jobs:
         with:
           go-version: "1.24"
 
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.15.4
+
       - name: Update go.sum
         working-directory: ./backend
         run: go mod tidy
@@ -42,6 +47,12 @@ jobs:
       - name: Run frontend lint
         working-directory: ./frontend
         run: npx eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 --config .eslintrc.cjs
+
+      - name: Lint Helm chart
+        run: |
+          helm lint shopverse-gitops/helm/shopverse \
+            -f shopverse-gitops/helm/shopverse/values.yaml \
+            -f shopverse-gitops/helm/shopverse/values.kops.yaml
 
   security-scan:
     name: Security Scan
@@ -167,6 +178,8 @@ jobs:
           text = text.replace('image: "" # frontend-image', f'image: "{registry}/shopverse-frontend:{tag}" # frontend-image')
           text = text.replace('image: "" # backend-image', f'image: "{registry}/shopverse-backend:{tag}" # backend-image')
           path.write_text(text)
+          print("Updated Helm values with registry:", registry)
+          print("Using image tag:", tag)
           PY
 
       - name: Commit and push Argo CD values update

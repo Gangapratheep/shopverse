@@ -16,3 +16,16 @@ ports:
 logs:
   general:
     level: INFO
+
+providers:
+  kubernetesIngress:
+    enabled: true
+    publishedService:
+      enabled: true
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+
+additionalArguments:
+  - --api.insecure=true

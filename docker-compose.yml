@@ -31,17 +31,19 @@ services:
       DB_USER: shopverse
       DB_PASSWORD: shopverse123
       JWT_SECRET: local-dev-jwt-secret-key
-      FRONTEND_ORIGIN: http://localhost:3000
+      FRONTEND_ORIGIN: http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       mysql:
         condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - shopverse-backend-svc
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
-      args:
-        VITE_API_URL: http://localhost:8080
     container_name: shopverse-frontend
     ports:
       - "3000:80"

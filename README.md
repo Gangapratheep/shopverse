@@ -1,426 +1,368 @@
-# ShopVerse - Full-Stack E-Commerce Application
+# ShopVerse - Step-by-Step Deployment Guide
 
-A production-ready 3-tier e-commerce web application built with React, Go (Fiber), and MySQL, deployed on AWS EKS using Helm charts.
+ShopVerse is a full-stack e-commerce application with a React frontend, a Go Fiber backend, and a MySQL database. This repository includes everything needed to run it locally, deploy it to AWS with Terraform, and roll it out to a kOps-based Kubernetes cluster using GitHub Actions and Argo CD.
 
+## 1. Project Overview
 
+- Frontend: React 18 + Vite + Tailwind CSS
+- Backend: Go 1.24 + Fiber + GORM + JWT
+- Database: MySQL 8.0
+- Deployment: Docker, Helm, Argo CD, GitHub Actions
+- Target platform: AWS EKS / kOps-managed Kubernetes cluster
 
-<img width="1280" height="720" alt="Shopverse project - Thumbnail" src="https://github.com/user-attachments/assets/fd0a3efe-aeb3-48dc-8912-714517580010" />
+## 2. Local Development
 
+### Step 1: Prerequisites
+Install the following tools:
+- Docker and Docker Compose
+- Node.js 18+
+- Go 1.24+
 
-## YouTube Video Link:
-
-```
-https://youtu.be/XQrJrf6pUvk?si=XGsLPOm6YC1AEJFk
-```
-
-## Architecture:
-
-```
-                         +------------------+
-                         |   AWS ALB        |
-                         | (Ingress Controller) |
-                         +--------+---------+
-                                  |
-                    +-------------+-------------+
-                    |                           |
-              /api/* routes               /* routes
-                    |                           |
-           +--------v---------+     +-----------v----------+
-           | Backend Service  |     | Frontend Service     |
-           | (Go + Fiber)     |     | (React + Nginx)      |
-           | Port 8080        |     | Port 80              |
-           | NodePort: 30081  |     | NodePort: 30080      |
-           | 2 replicas       |     | 2 replicas           |
-           +--------+---------+     +----------------------+
-                    |
-           +--------v---------+
-           | MySQL StatefulSet|
-           | Port 3306        |
-           | 5Gi PVC (gp2)   |
-           +------------------+
-```
-
-## Tech Stack
-
-| Layer    | Technology                     |
-|----------|--------------------------------|
-| Frontend | React 18, TailwindCSS, Vite    |
-| Backend  | Go 1.21, Fiber, GORM, JWT      |
-| Database | MySQL 8.0 (StatefulSet)        |
-| Infra    | AWS EKS, ECR, ALB, Terraform   |
-| CI/CD    | GitHub Actions, Helm, Trivy    |
-| IaC      | Terraform Modules (VPC, EKS, EC2) |
-
-## API Endpoints
-
-| Method | Endpoint            | Auth     | Description             |
-|--------|---------------------|----------|-------------------------|
-| POST   | /api/auth/register  | No       | Register new user       |
-| POST   | /api/auth/login     | No       | Login, returns JWT      |
-| GET    | /api/products       | No       | List products           |
-| GET    | /api/products/:id   | No       | Get single product      |
-| POST   | /api/products       | JWT      | Create product (admin)  |
-| GET    | /api/cart           | JWT      | Get user's cart         |
-| POST   | /api/cart           | JWT      | Add item to cart        |
-| PUT    | /api/cart/:id       | JWT      | Update cart item qty    |
-| DELETE | /api/cart/:id       | JWT      | Remove cart item        |
-| GET    | /api/orders         | JWT      | Get user's orders       |
-| POST   | /api/orders         | JWT      | Place order from cart   |
-| GET    | /health             | No       | Health check            |
-
----
-
-## Local Development
-
-### Prerequisites
-- Docker & Docker Compose
-- Node.js 18+ (for frontend dev)
-- Go 1.21+ (for backend dev)
-
-### Quick Start with Docker Compose
-
+### Step 2: Start the app locally
 ```bash
-# Clone the repo
-git clone <repo-url> && cd shopverse
-
-# Start all services
-docker-compose up --build
-
-# Access the app
-# Frontend: http://localhost:3000
-# Backend:  http://localhost:8080
+git clone <repo-url>
+cd shopverse
+docker compose up --build
 ```
 
-### Run Frontend Individually (Hot Reload)
+Access the application:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8080
+- Health check: http://localhost:8080/health
 
+### Step 3: Verify the app works
 ```bash
-cd frontend
-npm install
-npm run dev
-# Runs on http://localhost:3000 with proxy to backend
-```
-
-### Run Backend Individually
-
-```bash
-cd backend
-go mod tidy
-DB_HOST=localhost DB_USER=shopverse DB_PASSWORD=shopverse123 DB_NAME=shopverse go run ./cmd/main.go
+curl http://localhost:8080/health
+curl http://localhost:3000/api/products
 ```
 
 ---
 
-## AWS Deployment (Step-by-Step from Local)
+## 3. CI/CD and GitOps Flow
 
-### Prerequisites
+This repository is prepared for the following pipeline:
 
-Install the following tools on your local machine:
+1. GitHub Actions runs tests and security checks.
+2. Docker images are built and pushed to Amazon ECR.
+3. The GitHub workflow updates the Helm values file.
+4. Argo CD detects the GitOps change and deploys the updated release.
 
-| Tool       | Version  | Download |
-|------------|----------|----------|
-| Terraform  | >= 1.5.0 | https://developer.hashicorp.com/terraform/downloads |
-| AWS CLI v2 | Latest   | https://aws.amazon.com/cli/ |
-| kubectl    | Latest   | https://kubernetes.io/docs/tasks/tools/ |
-| Helm 3     | Latest   | https://helm.sh/docs/intro/install/ |
-| Docker     | Latest   | https://docs.docker.com/get-docker/ |
+### Required GitHub Secrets
+Add these in your GitHub repository settings:
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_REGION
+- ECR_REGISTRY
+
+Example values:
+```text
+AWS_REGION=us-east-1
+ECR_REGISTRY=123456789012.dkr.ecr.us-east-1.amazonaws.com
+```
 
 ---
 
-### Step 1: Configure AWS CLI
+## 4. Deploy to Your Existing kOps Cluster
 
+### Step 1: Prepare the cluster
+Make sure your existing kOps cluster has:
+- kubectl configured and connected to the cluster
+- Traefik installed
+- a LoadBalancer service available for ingress
+- permissions to pull images from ECR
+
+### Step 2: Install Argo CD
+```bash
+cd shopverse-gitops
+chmod +x scripts/install-argocd.sh
+./scripts/install-argocd.sh
+```
+
+### Step 3: Create the ECR pull secret
+```bash
+cd shopverse-gitops
+chmod +x scripts/create-ecr-secret.sh
+AWS_REGION=us-east-1 \
+AWS_ACCOUNT_ID=123456789012 \
+ECR_REGISTRY=123456789012.dkr.ecr.us-east-1.amazonaws.com \
+./scripts/create-ecr-secret.sh
+```
+
+### Step 4: Apply the Argo CD Application
+```bash
+kubectl apply -f apps/argocd/shopverse-application.yaml
+```
+
+### Step 5: Retrieve the Argo CD admin password
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+```
+
+---
+
+## 5. Helm and Ingress Configuration
+
+The Helm chart is located in:
+- [shopverse-gitops/helm/shopverse](shopverse-gitops/helm/shopverse)
+
+Update the hostnames in [shopverse-gitops/helm/shopverse/values.kops.yaml](shopverse-gitops/helm/shopverse/values.kops.yaml) before deployment:
+```yaml
+frontend:
+  ingressHost: shopverse.example.com
+
+backend:
+  ingressHost: api.shopverse.example.com
+```
+
+You should replace these placeholders with your real DNS names.
+
+---
+
+## 6. Traefik Setup for kOps
+
+Use the provided values file at [traefik-values.yaml](traefik-values.yaml) when installing Traefik:
+```bash
+helm repo add traefik https://traefik.github.io/charts
+helm repo update
+helm install traefik traefik/traefik -f traefik-values.yaml -n kube-system
+```
+
+The values file configures Traefik to expose a LoadBalancer service for ingress traffic.
+
+---
+
+## 7. GitHub Actions Deployment Flow
+
+Every push to the main branch will:
+- run tests
+- scan images for vulnerabilities
+- build and push images to ECR
+- update the Helm values used by Argo CD
+
+After that, Argo CD will sync the deployment automatically.
+
+---
+
+## 8. Useful Commands
+
+```bash
+# Check pods
+kubectl get pods -n shopverse
+
+# Check services
+kubectl get svc -n shopverse
+
+# Check ingress
+kubectl get ingress -n shopverse
+
+# Check Argo CD applications
+kubectl get applications -n argocd
+```
+
+---
+
+## 9. Troubleshooting
+
+If the app does not come up:
+- check pod logs with `kubectl logs`
+- verify the ECR image pull secret exists
+- confirm the ingress host points to the correct DNS name
+- verify Argo CD sync status in the Argo CD UI
+
+---
+
+## 10. Full Step-by-Step Checklist for Your kOps Cluster
+
+### Step 1: Make sure your local machine can reach the cluster
+Run these commands on your laptop or jump box:
+```bash
+kubectl get nodes
+kubectl get ns
+```
+If these commands fail, fix your kubeconfig first.
+
+### Step 2: Install prerequisites locally
+Install the following tools if they are not already available:
+```bash
+kubectl version --client
+helm version
+aws --version
+```
+
+### Step 3: Configure AWS access
+Make sure your AWS credentials are available:
 ```bash
 aws configure
-# AWS Access Key ID: <your-access-key>
-# AWS Secret Access Key: <your-secret-key>
-# Default region name: us-east-1
-# Default output format: json
-
-# Verify your identity
 aws sts get-caller-identity
 ```
 
----
-
-### Step 2: Create AWS Infrastructure using Terraform
-
-Terraform modules will create: VPC, EKS Cluster, Node Group, IAM Roles, Jump Server (EC2).
-
-See [terraform/README.md](terraform/README.md) for detailed Terraform instructions.
-
+### Step 4: Create or confirm the ECR registry
+You need an ECR registry for the frontend and backend images.
 ```bash
-cd terraform
-
-# Create S3 bucket for Terraform state (one-time setup)
-aws s3api create-bucket \
-  --bucket shopverse-terraform-state \
-  --region us-east-1
-
-aws s3api put-bucket-versioning \
-  --bucket shopverse-terraform-state \
-  --versioning-configuration Status=Enabled
-
-# Copy and edit variables
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values (cluster name, region, instance types, etc.)
-
-# Initialize Terraform
-terraform init
-
-# Preview what will be created
-terraform plan
-
-# Create the infrastructure (~15-20 minutes)
-terraform apply
-# Type 'yes' when prompted
-```
-
-After apply completes, note the outputs:
-```bash
-terraform output
-```
-
----
-
-### Step 3: Connect to the EKS Cluster
-
-```bash
-# Update your local kubeconfig (use cluster name from terraform output)
-aws eks update-kubeconfig --name shopverse-cluster --region us-east-1
-
-# Verify connection - you should see your worker nodes
-kubectl get nodes
-kubectl cluster-info
-```
-
----
-
-### Step 4: Create ECR Repositories
-
-Create 3 ECR repositories for frontend, backend, and Helm chart:
-
-```bash
-# Get your AWS Account ID
+AWS_REGION=us-east-1
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=us-east-1
+ECR_REGISTRY=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-# Create repositories
-aws ecr create-repository --repository-name shopverse-frontend --region $REGION
-aws ecr create-repository --repository-name shopverse-backend --region $REGION
-aws ecr create-repository --repository-name shopverse-helmchart --region $REGION
-
-# Verify repositories were created
-aws ecr describe-repositories --region $REGION --query 'repositories[].repositoryName'
+echo "$ECR_REGISTRY"
 ```
 
----
-
-### Step 5: Build Docker Images
-
+### Step 5: Install Traefik on the cluster
 ```bash
-# Navigate to project root
-cd ..
-
-# Build frontend image
-docker build -t shopverse-frontend:v1 ./frontend
-
-# Build backend image
-docker build -t shopverse-backend:v1 ./backend
-
-# Verify images were built
-docker images | grep shopverse
-```
-
----
-
-### Step 6: Tag Docker Images
-
-Tag the images with the ECR repository URI:
-
-```bash
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=us-east-1
-ECR_URI=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-
-# Tag frontend image
-docker tag shopverse-frontend:v1 ${ECR_URI}/shopverse-frontend:v1
-
-# Tag backend image
-docker tag shopverse-backend:v1 ${ECR_URI}/shopverse-backend:v1
-
-# Verify tags
-docker images | grep ${ACCOUNT_ID}
-```
-
----
-
-### Step 7: Push Docker Images to ECR
-
-```bash
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=us-east-1
-ECR_URI=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-
-# Login to ECR
-aws ecr get-login-password --region $REGION | \
-  docker login --username AWS --password-stdin ${ECR_URI}
-
-# Push frontend image
-docker push ${ECR_URI}/shopverse-frontend:v1
-
-# Push backend image
-docker push ${ECR_URI}/shopverse-backend:v1
-
-# Verify images in ECR
-aws ecr list-images --repository-name shopverse-frontend --region $REGION
-aws ecr list-images --repository-name shopverse-backend --region $REGION
-```
-
----
-
-### Step 8: Push Helm Chart to ECR (Optional)
-
-```bash
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=us-east-1
-ECR_URI=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-
-# Login to ECR for Helm
-aws ecr get-login-password --region $REGION | \
-  helm registry login --username AWS --password-stdin ${ECR_URI}
-
-# Package the Helm chart
-helm package ./helm/shopverse
-
-# Push Helm chart to ECR
-helm push shopverse-1.0.0.tgz oci://${ECR_URI}/shopverse-helmchart
-
-# Verify
-aws ecr list-images --repository-name shopverse-helmchart --region $REGION
-```
-
----
-
-### Step 9: Install EKS Add-ons
-
-```bash
-# Install EBS CSI Driver (required for MySQL PVC)
-# If using Terraform modules, EBS CSI is already installed as an addon.
-# If not, install manually:
-eksctl utils associate-iam-oidc-provider --cluster shopverse-cluster --region us-east-1 --approve
-
-eksctl create iamserviceaccount \
-  --name ebs-csi-controller-sa \
-  --namespace kube-system \
-  --cluster shopverse-cluster \
-  --region us-east-1 \
-  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-  --approve
-
-aws eks create-addon --cluster-name shopverse-cluster --addon-name aws-ebs-csi-driver --region us-east-1
-
-# Install AWS Load Balancer Controller (required for ALB Ingress)
-ALB_ROLE_ARN=$(cd terraform && terraform output -raw alb_controller_role_arn)
-
-helm repo add eks https://aws.github.io/eks-charts
+helm repo add traefik https://traefik.github.io/charts
 helm repo update
-helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  -n kube-system \
-  --set clusterName=shopverse-cluster \
-  --set serviceAccount.create=true \
-  --set serviceAccount.name=aws-load-balancer-controller \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=$ALB_ROLE_ARN
+helm install traefik traefik/traefik -f traefik-values.yaml -n kube-system
 ```
 
----
-
-### Step 10: Deploy Application using Helm
-
+### Step 6: Verify Traefik is running
 ```bash
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=us-east-1
-ECR_URI=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-
-helm upgrade --install shopverse ./helm/shopverse \
-  --set frontend.image=${ECR_URI}/shopverse-frontend:v1 \
-  --set backend.image=${ECR_URI}/shopverse-backend:v1 \
-  --set mysql.rootPassword=YourRootPassword123 \
-  --set mysql.password=YourAppPassword123 \
-  --set jwtSecret=YourJwtSecretKey123 \
-  --namespace shopverse \
-  --create-namespace \
-  --wait --timeout 600s
+kubectl get pods -n kube-system | grep traefik
+kubectl get svc -n kube-system | grep traefik
 ```
 
----
-
-### Step 11: Verify Deployment
-
+### Step 7: Install Argo CD
 ```bash
-# Check all pods are running (should see 5 pods: 2 frontend, 2 backend, 1 mysql)
+cd shopverse-gitops
+chmod +x scripts/install-argocd.sh
+./scripts/install-argocd.sh
+```
+
+### Step 8: Get Argo CD access details
+```bash
+kubectl get svc -n argocd
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+```
+
+### Step 9: Create the ECR pull secret in the cluster
+```bash
+cd shopverse-gitops
+chmod +x scripts/create-ecr-secret.sh
+AWS_REGION=us-east-1 \
+AWS_ACCOUNT_ID=123456789012 \
+ECR_REGISTRY=123456789012.dkr.ecr.us-east-1.amazonaws.com \
+./scripts/create-ecr-secret.sh
+```
+
+### Step 10: Update the Helm host values
+Edit [shopverse-gitops/helm/shopverse/values.kops.yaml](shopverse-gitops/helm/shopverse/values.kops.yaml) and set real hostnames:
+```yaml
+frontend:
+  ingressHost: shopverse.your-domain.com
+
+backend:
+  ingressHost: api.shopverse.your-domain.com
+```
+
+### Step 11: Add the required GitHub repository secrets
+In GitHub, go to your repository settings and add:
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_REGION
+- ECR_REGISTRY
+
+Example:
+```text
+AWS_REGION=us-east-1
+ECR_REGISTRY=123456789012.dkr.ecr.us-east-1.amazonaws.com
+```
+
+### Step 12: Push the changes to GitHub
+```bash
+git add .
+git commit -m "chore: finalize Argo CD deployment flow"
+git push origin main
+```
+This triggers the GitHub Actions workflow.
+
+### Step 13: Watch the GitHub Actions workflow
+Open the Actions tab in GitHub and confirm the workflow completes successfully.
+
+### Step 14: Apply the Argo CD Application manifest
+```bash
+kubectl apply -f shopverse-gitops/apps/argocd/shopverse-application.yaml
+```
+
+### Step 15: Verify Argo CD sync status
+```bash
+kubectl get applications -n argocd
+kubectl describe application shopverse -n argocd
+```
+
+### Step 16: Verify the app is running
+```bash
 kubectl get pods -n shopverse
-
-# Check services (frontend NodePort:30080, backend NodePort:30081)
 kubectl get svc -n shopverse
-
-# Check persistent volume claims (MySQL storage)
-kubectl get pvc -n shopverse
-
-# Check all resources at once
-kubectl get all -n shopverse
-
-# Check pod logs if needed
-kubectl logs -n shopverse -l component=backend --tail=50
-kubectl logs -n shopverse -l component=frontend --tail=50
-kubectl logs -n shopverse shopverse-mysql-0 --tail=50
-```
-
----
-
-### Step 12: Access the Application
-
-**Get Node External IPs:**
-```bash
-kubectl get nodes -o wide
-# Note the EXTERNAL-IP column
-```
-
-**Access via NodePort:**
-```
-Frontend:  http://<NODE_EXTERNAL_IP>:30080
-Backend:   http://<NODE_EXTERNAL_IP>:30081
-Health:    http://<NODE_EXTERNAL_IP>:30081/health
-```
-
-**Access via ALB Ingress (if configured):**
-```bash
 kubectl get ingress -n shopverse
-# Use the ADDRESS field as the URL
 ```
 
-> **Note:** Make sure the EKS node security group allows inbound traffic on ports **30080** and **30081**. You can update this in AWS Console > EC2 > Security Groups > find the node security group > add inbound rules for Custom TCP ports 30080 and 30081 from `0.0.0.0/0`.
+### Step 17: Access the application
+Once the ingress and load balancer are ready, open your domain in the browser.
+
+If your DNS is configured, the app should be available at:
+- https://shopverse.your-domain.com
+- https://api.shopverse.your-domain.com
 
 ---
 
-## Connect to Jump Server
+## 18. Copy-Paste Commands Version
 
-If you created a jump server via Terraform (`create_jump_server = true`):
-
-1. Go to **AWS Console** > **EC2** > **Instances**
-2. Select the jump server instance
-3. Click **Connect** > Choose **EC2 Instance Connect** > Click **Connect**
-
-The jump server comes pre-installed with: AWS CLI, kubectl, Helm, Docker, Git.
+Use the commands below if you want to run the deployment flow directly from your terminal.
 
 ```bash
-# Once connected, verify tools
-kubectl get nodes
-helm version
-docker --version
+# 1) Set your values
+export AWS_REGION=us-east-1
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+export FRONTEND_HOST="shopverse.your-domain.com"
+export BACKEND_HOST="api.shopverse.your-domain.com"
 
-# Check application pods
+echo "AWS_REGION=$AWS_REGION"
+echo "ECR_REGISTRY=$ECR_REGISTRY"
+
+echo "Checking cluster access..."
+kubectl get nodes
+kubectl get ns
+
+# 2) Install Traefik
+helm repo add traefik https://traefik.github.io/charts
+helm repo update
+helm install traefik traefik/traefik -f traefik-values.yaml -n kube-system
+
+# 3) Install Argo CD
+cd shopverse-gitops
+chmod +x scripts/install-argocd.sh
+./scripts/install-argocd.sh
+
+# 4) Create the ECR pull secret
+chmod +x scripts/create-ecr-secret.sh
+AWS_REGION="$AWS_REGION" \
+AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
+ECR_REGISTRY="$ECR_REGISTRY" \
+./scripts/create-ecr-secret.sh
+
+# 5) Update the ingress hostnames in the Helm values file
+python - <<'PY'
+from pathlib import Path
+path = Path('shopverse-gitops/helm/shopverse/values.kops.yaml')
+text = path.read_text()
+text = text.replace('shopverse.example.com', 'shopverse.your-domain.com')
+text = text.replace('api.shopverse.example.com', 'api.shopverse.your-domain.com')
+path.write_text(text)
+PY
+
+# 6) Apply the Argo CD Application
+kubectl apply -f apps/argocd/shopverse-application.yaml
+
+# 7) Get the Argo CD admin password
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+# 8) Verify resources
+kubectl get applications -n argocd
 kubectl get pods -n shopverse
 kubectl get svc -n shopverse
+kubectl get ingress -n shopverse
 ```
+
+> Replace the example domains with your real DNS names before you run the commands.
 
 ---
 

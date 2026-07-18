@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -34,10 +35,12 @@ func main() {
 		frontendOrigin = "http://localhost:3000"
 	}
 
+	origins := strings.Join(parseAllowedOrigins(frontendOrigin), ",")
+
 	allowCredentials := frontendOrigin != "*"
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     frontendOrigin,
+		AllowOrigins:     origins,
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: allowCredentials,
@@ -75,4 +78,19 @@ func main() {
 
 	log.Printf("Server starting on port %s", port)
 	log.Fatal(app.Listen(":" + port))
+}
+
+func parseAllowedOrigins(frontendOrigin string) []string {
+	if frontendOrigin == "" {
+		frontendOrigin = "http://localhost:3000"
+	}
+
+	origins := []string{}
+	for _, origin := range strings.Split(frontendOrigin, ",") {
+		trimmed := strings.TrimSpace(origin)
+		if trimmed != "" {
+			origins = append(origins, trimmed)
+		}
+	}
+	return origins
 }
