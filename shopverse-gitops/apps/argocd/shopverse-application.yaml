@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shopverse
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/vijaygiduthuri/shopverse.git"
+    targetRevision: main
+    path: shopverse-gitops/helm/shopverse
+    helm:
+      valueFiles:
+        - values.yaml
+        - values.kops.yaml
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: shopverse
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

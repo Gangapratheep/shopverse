@@ -17,6 +17,12 @@ spec:
         app: shopverse
         component: frontend
     spec:
+      {{- if .Values.frontend.imagePullSecrets }}
+      imagePullSecrets:
+{{- range .Values.frontend.imagePullSecrets }}
+        - name: {{ . }}
+{{- end }}
+      {{- end }}
       containers:
         - name: frontend
           image: {{ .Values.frontend.image | quote }}

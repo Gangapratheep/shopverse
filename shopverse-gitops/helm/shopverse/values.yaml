@@ -4,7 +4,8 @@
 frontend:
   deploymentName: shopverse-frontend
   replicas: 2
-  image: ""  # frontend-image
+  image: "" # frontend-image
+  imagePullSecrets: []
   serviceName: shopverse-frontend-svc
   servicePort: 80
   ingressName: shopverse-frontend-ingress
@@ -16,7 +17,8 @@ frontend:
 backend:
   deploymentName: shopverse-backend
   replicas: 2
-  image: ""  # backend-image
+  image: "" # backend-image
+  imagePullSecrets: []
   serviceName: shopverse-backend-svc
   servicePort: 8080
   ingressName: shopverse-backend-ingress
