@@ -150,42 +150,67 @@ jobs:
         run: |
           docker push "$ECR_REGISTRY/shopverse-backend:${{ github.sha }}"
           docker push "$ECR_REGISTRY/shopverse-backend:latest"
-
+# ======================================================
+# Stage 4 : Update GitOps Repository
+#
+# Purpose:
+# ------------------------------------------------------
+# This stage implements the GitOps deployment model.
+#
+# GitHub Actions DOES NOT deploy anything to Kubernetes.
+#
+# Instead it performs the following:
+#
+# 1. Checkout the latest source code
+# 2. Update the Helm values.yaml with the new Docker images
+# 3. Commit the updated Helm values
+# 4. Push the changes back to GitHub
+#
+# Argo CD continuously watches this repository.
+#
+# Once this commit is pushed,
+# Argo CD automatically detects the change,
+# synchronizes the cluster,
+# downloads the latest Docker images from Amazon ECR,
+# and updates the Kubernetes deployment.
+#
+# CI  = GitHub Actions
+# CD  = Argo CD
+#
+# No kubectl commands.
+# No helm upgrade commands.
+#
+# This follows the GitOps best practice.
+# ======================================================
   update-gitops:
-    name: Update GitOps values for Argo CD
     runs-on: ubuntu-latest
-    needs: build-and-push
     permissions:
       contents: write
-
     env:
       ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
       IMAGE_TAG: ${{ github.sha }}
-
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Update Helm image values
+      - name: Install yq
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path("shopverse-gitops/helm/shopverse/values.yaml")
-          text = path.read_text()
-          registry = "${{ env.ECR_REGISTRY }}"
-          tag = "${{ env.IMAGE_TAG }}"
-          text = text.replace('image: "" # frontend-image', f'image: "{registry}/shopverse-frontend:{tag}" # frontend-image')
-          text = text.replace('image: "" # backend-image', f'image: "{registry}/shopverse-backend:{tag}" # backend-image')
-          path.write_text(text)
-          print("Updated Helm values with registry:", registry)
-          print("Using image tag:", tag)
-          PY
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
 
-      - name: Commit and push Argo CD values update
+      - name: Update frontend image
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          yq -i '.frontend.image = "'"$ECR_REGISTRY"'/shopverse-frontend:'"$IMAGE_TAG"'"' shopverse-gitops/helm/shopverse/values.yaml
+
+      - name: Update backend image
+        run: |
+          yq -i '.backend.image = "'"$ECR_REGISTRY"'/shopverse-backend:'"$IMAGE_TAG"'"' shopverse-gitops/helm/shopverse/values.yaml
+
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add shopverse-gitops/helm/shopverse/values.yaml
-          git diff --cached --quiet || git commit -m "chore(ci): update Argo CD image tags"
+          git diff --cached --quiet || git commit -m "Update image tags"
           git push origin main
