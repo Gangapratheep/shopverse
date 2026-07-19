@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "https://github.com/vijaygiduthuri/shopverse.git"
+    repoURL: "https://github.com/gangapratheep/shopverse.git"
     targetRevision: main
     path: shopverse-gitops/helm/shopverse
     helm:
