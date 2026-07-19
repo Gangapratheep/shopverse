@@ -4,26 +4,24 @@
 frontend:
   deploymentName: shopverse-frontend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:a40110ca13fe9ea586fe7394d8dbb3bc7dbff2aa" # frontend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:afdaa77cac125a3e7e278067bbcc5002dc0ef200" # frontend-image
   imagePullSecrets: []
   serviceName: shopverse-frontend-svc
   servicePort: 80
   ingressName: shopverse-frontend-ingress
   ingressHost: ""
-
 # ──────────────────────────────────────
 # Backend
 # ──────────────────────────────────────
 backend:
   deploymentName: shopverse-backend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:a40110ca13fe9ea586fe7394d8dbb3bc7dbff2aa" # backend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:afdaa77cac125a3e7e278067bbcc5002dc0ef200" # backend-image
   imagePullSecrets: []
   serviceName: shopverse-backend-svc
   servicePort: 8080
   ingressName: shopverse-backend-ingress
   ingressHost: ""
-
 # ──────────────────────────────────────
 # MySQL
 # ──────────────────────────────────────
@@ -41,7 +39,6 @@ mysql:
     requests:
       memory: "256Mi"
       cpu: "250m"
-
 # ──────────────────────────────────────
 # Shared
 # ──────────────────────────────────────
@@ -49,5 +46,4 @@ ingress:
   enabled: false
   ingressClassName: traefik
   annotations: {}
-
 jwtSecret: ""
