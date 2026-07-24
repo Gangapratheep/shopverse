@@ -11,13 +11,13 @@ ingress:
     # traefik.ingress.kubernetes.io/router.tls: "true"
 
 frontend:
-  ingressHost: shopverse.example.com
+  ingressHost: gangadevops.site
   replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
 
 backend:
-  ingressHost: api.shopverse.example.com
+  ingressHost: api.gangadevops.site
   replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
