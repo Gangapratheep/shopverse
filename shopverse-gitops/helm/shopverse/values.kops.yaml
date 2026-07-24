@@ -8,7 +8,8 @@ ingress:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     # If you use TLS via traefik, set the following and adjust certresolver
     # traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    # traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: myresolver
 
 frontend:
   ingressHost: shopverse.gangadevops.site
