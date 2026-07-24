@@ -28,6 +28,23 @@ mysql:
   storageClass: gp2
   storage: 10Gi
 
+istio:
+  ingressHost: istio.gangadevops.site
+  replicas: 1
+  imagePullSecrets: []
+  serviceName: istio-ingressgateway
+  servicePort: 443
+  ingressName: istio-ingress
+
+kiali:
+  ingressHost: kiali.gangadevops.site
+  replicas: 1
+  imagePullSecrets: []
+  serviceName: kiali
+  servicePort: 20001
+  ingressName: kiali-ingress
+
+
 # Optionally override images here if you do not want CI to update values.yaml
 # frontend:
 #   image: "123456789012.dkr.ecr.us-east-1.amazonaws.com/shopverse-frontend:latest"
