@@ -28,8 +28,8 @@ backend:
 mysql:
   database: shopverse
   user: shopverse
-  rootPassword: ""
-  password: ""
+  rootPassword: "R00tPass!9x74"
+  password: "ShopUser#4kLm4"
   storage: 5Gi
   storageClass: gp2
   resources:
@@ -46,4 +46,4 @@ ingress:
   enabled: false
   ingressClassName: traefik
   annotations: {}
-jwtSecret: ""
+jwtSecret: "JWTs3cr3t!8zYpQw"
