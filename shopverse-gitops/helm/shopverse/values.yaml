@@ -4,7 +4,7 @@
 frontend:
   deploymentName: shopverse-frontend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:6b24aad9d986109417ed5e42c3869eae451e3dde" # frontend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:4a0443d8ddb56d5193f57974c0505c7817f7c34c" # frontend-image
   imagePullSecrets: []
   serviceName: shopverse-frontend-svc
   servicePort: 80
@@ -16,7 +16,7 @@ frontend:
 backend:
   deploymentName: shopverse-backend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:6b24aad9d986109417ed5e42c3869eae451e3dde" # backend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:4a0443d8ddb56d5193f57974c0505c7817f7c34c" # backend-image
   imagePullSecrets: []
   serviceName: shopverse-backend-svc
   servicePort: 8080
