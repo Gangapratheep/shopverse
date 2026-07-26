@@ -4,7 +4,7 @@
 frontend:
   deploymentName: shopverse-frontend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:fdbe6f050c6e9dc4210fb8fc31e085daa95c6a71" # frontend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:cda6369523a3be9c560901498d7520b05730128a" # frontend-image
   imagePullSecrets: []
   serviceName: shopverse-frontend-svc
   servicePort: 80
@@ -17,7 +17,7 @@ frontend:
 backend:
   deploymentName: shopverse-backend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:fdbe6f050c6e9dc4210fb8fc31e085daa95c6a71" # backend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:cda6369523a3be9c560901498d7520b05730128a" # backend-image
   imagePullSecrets: []
   serviceName: shopverse-backend-svc
   servicePort: 8080
@@ -49,4 +49,3 @@ ingress:
   ingressClassName: traefik
   annotations: {}
 jwtSecret: "JWTs3cr3t!8zYpQw"
-
