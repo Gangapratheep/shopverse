@@ -20,6 +20,10 @@ spec:
                 name: {{ .Values.frontend.serviceName }}
                 port:
                   number: {{ .Values.frontend.servicePort }}
+  tls:
+    - hosts:
+        - {{ .Values.frontend.ingressHost | default "" | quote }}
+      secretName: shopverse-frontend-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -49,4 +53,8 @@ spec:
                 name: {{ .Values.backend.serviceName }}
                 port:
                   number: {{ .Values.backend.servicePort }}
+  tls:
+    - hosts:
+        - {{ .Values.backend.ingressHost | default "" | quote }}
+      secretName: shopverse-backend-tls
 {{- end }}
