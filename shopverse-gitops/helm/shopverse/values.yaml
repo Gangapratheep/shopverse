@@ -4,7 +4,7 @@
 frontend:
   deploymentName: shopverse-frontend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:60d2479331d9c4d675ac4db6c93503834d456230" # frontend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-frontend:82cc69604514c9c613b96e3cc11cde7dd47b30f4" # frontend-image
   imagePullSecrets: []
   serviceName: shopverse-frontend-svc
   servicePort: 80
@@ -17,13 +17,13 @@ frontend:
 backend:
   deploymentName: shopverse-backend
   replicas: 2
-  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:60d2479331d9c4d675ac4db6c93503834d456230" # backend-image
+  image: "295493126166.dkr.ecr.ap-south-1.amazonaws.com/shopverse-backend:82cc69604514c9c613b96e3cc11cde7dd47b30f4" # backend-image
   imagePullSecrets: []
   serviceName: shopverse-backend-svc
   servicePort: 8080
   ingressName: shopverse-backend-ingress
   ingressHost: shopverse-api.gangadevops.site
-  ingressClassName: traefik   # <-- add this
+  ingressClassName: traefik # <-- add this
 # ──────────────────────────────────────
 # MySQL
 # ──────────────────────────────────────
