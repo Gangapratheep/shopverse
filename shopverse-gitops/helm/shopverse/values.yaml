@@ -49,3 +49,4 @@ ingress:
   ingressClassName: traefik
   annotations: {}
 jwtSecret: "JWTs3cr3t!8zYpQw"
+
