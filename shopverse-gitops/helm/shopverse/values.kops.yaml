@@ -16,12 +16,14 @@ frontend:
   replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
+  ingressClassName: traefik
 
 backend:
   ingressHost: shopverse-api.gangadevops.site
   replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
+  ingressClassName: traefik
 
 mysql:
   # Ensure this storageClass exists in your kops cluster (gp2 is common on AWS)
