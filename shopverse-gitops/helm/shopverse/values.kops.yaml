@@ -1,36 +1,50 @@
-# Kops-specific overrides for deploying to kops clusters
-
+# ──────────────────────────────────────
+# Global Ingress Settings
+# ──────────────────────────────────────
 ingress:
   enabled: true
-  ingressClassName: traefik
+  ingressClassName: traefik   # Ensures spec.ingressClassName is set in all ingresses
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    # If you use TLS via traefik, set the following and adjust certresolver
-    # traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: myresolver
+    # NOTE: These annotations configure Traefik to use HTTPS with Let's Encrypt (myresolver)
 
+# ──────────────────────────────────────
+# Frontend
+# ──────────────────────────────────────
 frontend:
-  ingressHost: shopverse.gangadevops.site
+  ingressHost: shopverse.gangadevops.site   # Hostname for frontend ingress
   replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
-  ingressClassName: traefik
+  ingressClassName: traefik                 # Explicitly set ingressClassName for frontend
+  # IMPORTANT: Do not nest "spec:" here. Helm templates will consume this value directly.
 
+# ──────────────────────────────────────
+# Backend
+# ──────────────────────────────────────
 backend:
-  ingressHost: shopverse-api.gangadevops.site
+  ingressHost: shopverse-api.gangadevops.site  # Hostname for backend ingress
   replicas: 2
   imagePullSecrets:
     - ecr-registry-secret
-  ingressClassName: traefik
+  ingressClassName: traefik                    # Explicitly set ingressClassName for backend
+  # This ensures backend ingress shows CLASS=traefik instead of <none>
 
+# ──────────────────────────────────────
+# MySQL
+# ──────────────────────────────────────
 mysql:
   # Ensure this storageClass exists in your kops cluster (gp2 is common on AWS)
   storageClass: gp2
   storage: 10Gi
+  # You can also override DB credentials/resources here if needed
 
-# Optionally override images here if you do not want CI to update values.yaml
+# ──────────────────────────────────────
+# Optional image overrides (CI/CD can update these automatically)
+# ──────────────────────────────────────
 # frontend:
 #   image: "123456789012.dkr.ecr.us-east-1.amazonaws.com/shopverse-frontend:latest"
 # backend:
