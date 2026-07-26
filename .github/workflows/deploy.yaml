@@ -235,3 +235,4 @@ jobs:
           git add shopverse-gitops/helm/shopverse/values.yaml
           git diff --cached --quiet || git commit -m "Update image tags"
           git push origin main
+
