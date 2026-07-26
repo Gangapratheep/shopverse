@@ -8,7 +8,7 @@ metadata:
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
-  ingressClassName: {{ .Values.ingress.ingressClassName | default "" | quote }}
+  ingressClassName: {{ .Values.frontend.ingressClassName | default .Values.ingress.ingressClassName | quote }}
   rules:
     - host: {{ .Values.frontend.ingressHost | default "" | quote }}
       http:
@@ -30,6 +30,7 @@ metadata:
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
+  ingressClassName: {{ .Values.backend.ingressClassName | default .Values.ingress.ingressClassName | quote }}
   rules:
     - host: {{ .Values.backend.ingressHost | default "" | quote }}
       http:
